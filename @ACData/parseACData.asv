@@ -8,7 +8,7 @@ function parseACData(obj)
         numToDelete = nnz(toDelete);
         if numToDelete ~= 0
             toAdd(toDelete, :) = [];
-            disp(['Truncated ' num2str(numToDelete) ' datapoints from ' obj.DataFiles(a).Filename] );
+            disp(['Truncated ' num2str(numToDelete) ' datapoints from ' obj.DataFiles(a).Filename]);
         end
         obj.Parsed = [obj.Parsed; toAdd];
     end
@@ -17,5 +17,5 @@ function parseACData(obj)
     obj.Parsed = obj.Parsed(:, reorder_idxs);
 
     obj.Parsed = sortrows(obj.Parsed, {'TemperatureRounded', 'Frequency'});
-    
+  
 end

@@ -17,5 +17,4 @@ function parseACData(obj)
     obj.Parsed = obj.Parsed(:, reorder_idxs);
 
     obj.Parsed = sortrows(obj.Parsed, {'TemperatureRounded', 'Frequency'});
-    
 end
