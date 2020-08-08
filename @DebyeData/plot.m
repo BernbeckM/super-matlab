@@ -1,8 +1,4 @@
 function plot(obj, plot_type, varargin)
-    p = inputParser;
-    p.addParameter('Spacing', 1);
-    p.parse(varargin{:});
-
     model_group = obj.Model.TemperatureRounded;
     data_group = obj.Parsed.TemperatureRounded;
     switch plot_type
@@ -32,6 +28,10 @@ function plot(obj, plot_type, varargin)
             return;
     end
 
+    p = inputParser;
+    p.addParameter('Spacing', 1);
+    p.parse(varargin{:});
+    
     switch class(obj)
         case 'ACData'
             marker = 'o';

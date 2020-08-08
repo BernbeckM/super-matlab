@@ -12,16 +12,17 @@ function fitTau(obj, varargin)
     obj.Errors = table;
 
     ccx0 = [1/(2*pi*((max(obj.Parsed.Frequency) + min(obj.Parsed.Frequency))/2)), 0.3, 1];
-    cclb = [1/(1.1*2*pi*max(obj.Parsed.Frequency)), 0, 0.2];
-    ccub = [1/(0.9*2*pi*min(obj.Parsed.Frequency)), 0.5, 15];
-
+    cclb = [1/(5*2*pi*max(obj.Parsed.Frequency)), 0, 0.1];
+    %ccub = [200, 0.8, 20];
+    ccub = [1/(0.01*2*pi*min(obj.Parsed.Frequency)), 0.8, 20];
     hnx0 = [1/(2*pi*((max(obj.Parsed.Frequency) + min(obj.Parsed.Frequency))/2)), 0.9, 1, 5];
     hnlb = [1/(2*pi*max(obj.Parsed.Frequency)*1.05), 0.01, 0.01, 1E-1];
-    hnub = [1/(2*pi*min(obj.Parsed.Frequency)*0.95), 1, 1, 15];
+    hnub = [1/(2*pi*min(obj.Parsed.Frequency)*0.95), 1, 1, 55];
 
     chiInfx0 = [0];
-    chiInflb = [0.01];
-    chiInfub = [max(obj.Parsed.ChiOut)];
+    chiInflb = [1E-8];
+    chiInfub = [10];
+    %chiInfub = [max(obj.Parsed.ChiOut)];
 
     x0 = [repmat(ccx0, 1, obj.nCC), repmat(hnx0, 1, obj.nHN), chiInfx0];
     lb = [repmat(cclb, 1, obj.nCC), repmat(hnlb, 1, obj.nHN), chiInflb];

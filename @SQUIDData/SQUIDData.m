@@ -1,7 +1,7 @@
 classdef SQUIDData < handle
     properties
         DataFiles = [];
-        Parsed = [];
+        Parsed    = table;
     end
     
     methods

@@ -1,5 +1,9 @@
 classdef DebyeData < TauData
-    properties (SetAccess = private)
+    properties
+        %Model  = cell2table(cell(0, 4), 'VariableNames', {'TemperatureRounded', 'Frequency', 'ChiIn', 'ChiOut'});    
+    end
+    
+    properties (Access = private)
         nCC = 0;
         nHN = 0;
     end

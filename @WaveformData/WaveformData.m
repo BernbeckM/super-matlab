@@ -1,6 +1,6 @@
 classdef WaveformData < DebyeData
     properties
-        Spectra;
+        Spectra = table;
     end
 
     properties (Access = protected)

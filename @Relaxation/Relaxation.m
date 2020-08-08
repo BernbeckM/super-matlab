@@ -35,10 +35,14 @@ classdef Relaxation < handle
                 return;
             end
 
-            orbachx0 = [100, 1E-9]; ramanx0 = [5E-5, 5]; qtmx0 = [1E-4];
-            orbachlb = [30, 1E-13]; ramanlb = [1E-7, 2]; qtmlb = [1E-6];
-            orbachub = [200, 1E-5]; ramanub = [1E-1, 9]; qtmub = [1E4];
+            %orbachx0 = [1, 1]; ramanx0 = [5E-5, 5]; qtmx0 = [1E-4];
+            %orbachlb = [0.1, 1E-2]; ramanlb = [1E-7, 2]; qtmlb = [1E-6];
+            %orbachub = [30, 1E3]; ramanub = [1E-1, 9]; qtmub = [1E4];
 
+            orbachx0 = [150, 1E-10]; ramanx0 = [5E-5, 5]; qtmx0 = [1E-4];
+            orbachlb = [80, 1E-13]; ramanlb = [1E-7, 2]; qtmlb = [1E-6];
+            orbachub = [220, 1E-7]; ramanub = [1E-1, 9]; qtmub = [1E4];
+            
             x0 = [repmat(orbachx0, 1, p.Results.orbach), repmat(ramanx0, 1, p.Results.raman), repmat(qtmx0, 1, p.Results.qtm)];
             lb = [repmat(orbachlb, 1, p.Results.orbach), repmat(ramanlb, 1, p.Results.raman), repmat(qtmlb, 1, p.Results.qtm)];
             ub = [repmat(orbachub, 1, p.Results.orbach), repmat(ramanub, 1, p.Results.raman), repmat(qtmub, 1, p.Results.qtm)];
@@ -46,12 +50,13 @@ classdef Relaxation < handle
             opts = optimoptions(@fmincon, 'Algorithm', 'interior-point', ...
                                   'FunctionTolerance', 1e-30, 'OptimalityTolerance', 1e-30, 'StepTolerance', 1e-30, ...
                                   'ObjectiveLimit', 1e-30, 'Display', 'off', 'ConstraintTolerance', 1E-30);
-            gs = GlobalSearch('MaxTime', 30, 'Display', 'off', 'NumTrialPoints', 3000, 'NumStageOnePoints', 600);
+            gs = GlobalSearch('MaxTime', 45, 'Display', 'off', 'NumTrialPoints', 3500, 'NumStageOnePoints', 700);
             problem = createOptimProblem('fmincon', 'x0', x0, 'objective', @(b) Relaxation.objective(obj.Data.Temperature, log(1./obj.Data.tau), p.Results.orbach, p.Results.raman, p.Results.qtm, b), ...
                                      'lb', lb, 'ub', ub, 'options', opts);
             [obj.Fits, ~, ~, ~, ~] = gs.run(problem);
 
-            xmodel = logspace(log10(min(obj.Data.Temperature - 3)), log10(max(obj.Data.Temperature)), 100)';
+            xmodel = logspace(log10(min(obj.Data.Temperature)), log10(max(obj.Data.Temperature)), 100)';
+            %xmodel = logspace(log10(10), log10(17), 100)';
             ymodel = Relaxation.model(xmodel, p.Results.orbach, p.Results.raman, p.Results.qtm, obj.Fits);
             varnames = {repmat({'Ueff', 'tau_0'}, 1, p.Results.orbach), repmat({'C', 'n'}, 1, p.Results.raman), repmat({'qtm'}, 1, p.Results.qtm)}
             obj.Fits = array2table(obj.Fits, 'VariableNames', [varnames{:}]);

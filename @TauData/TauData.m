@@ -2,7 +2,7 @@ classdef TauData < SQUIDData
     properties
         Fits   = table;
         Errors = table;
-        Model  = cell2table(cell(0, 4), 'VariableNames', {'TemperatureRounded', 'Frequency', 'ChiIn', 'ChiOut'});
+        Model  = table;
     end
     
     methods (Abstract)

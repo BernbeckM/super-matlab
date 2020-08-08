@@ -1,7 +1,9 @@
 classdef PlotHelper
     properties (Hidden = true, Constant)
         colorAlpha = 0.5;
-        hotTemp = 17;
+        %hotTemp = 17;
+        coldTemp = 6;
+        hotTemp = 10;
         
         defaultAxesBox = 'on';
         defaultLineLineWidth = 1.5;
@@ -47,7 +49,7 @@ classdef PlotHelper
         function color = colorSelector(temperature, a)
             %color = hsv2rgb([1-tanh(temperature/30)' double(mod(a + 3, 3)) ones(length(temperature), 1)*0.9]);
             cmap = jet(100);
-            temperature = floor(rescale(temperature, 1, 100, 'InputMin', 1.8, 'InputMax', PlotHelper.hotTemp));
+            temperature = floor(rescale(temperature, 1, 100, 'InputMin', PlotHelper.coldTemp, 'InputMax', PlotHelper.hotTemp));
             temperature = rgb2hsv(cmap(temperature, :));
             color = hsv2rgb([temperature(:, 1) double(mod(a + 3, 3))*temperature(:, 2) temperature(:, 3)*0.85]);
         end
