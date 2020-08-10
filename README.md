@@ -5,6 +5,7 @@ A collection of MATLAB functions that parse and fit data from a Quantum Design M
 The folder containing these scripts should be added to your MATLAB path. This can be done by clicking the **Set Path** button under the **Home** tab. See [this](https://www.mathworks.com/help/matlab/matlab_env/add-remove-or-reorder-folders-on-the-search-path.html) for more details.
 
 ## Usage
+** this section is out-of-date **
 Datafiles (.dat) are parsed by classes whose constructor arguments are filenames or lists of filenames. Constructors called without arguments parse all .dat files in the current directory. Classes that typical users will instantiate are: `ACData`, `MagnetizationData`, `SusceptibilityData`, and `WaveformData`. The corresponding object properties contain raw, parsed, and potentially fitted data and the object methods perform routine operations on these data (currently: fitting, exporting). Each class instance of `ACData` and `WaveformData` corresponds to one model fit of the supplied dataset(s). SQUID versions and measurement modes are automatically detected and currently supported types are:
 (MPMS 3) AC, DC, and VSM
 (MPMS XL) AC, DC, and RSO.
@@ -26,6 +27,7 @@ Datafile headers are parsed and used to perform conversions and corrections to t
 * **Shape**: Sample molar diamagnetism
 
 ## &tau; model classes
+** this section is out-of-date **
 #### `ACData`
 Parses and fits standard AC susceptibility data to a generalized Debye model.
 
