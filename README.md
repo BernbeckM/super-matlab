@@ -1,5 +1,5 @@
 # super
-A collection of MATLAB functions that parse and fit data from a Quantum Design MPMS 3 and MPMS XL SQUID magnetometers.
+A MATLAB package for parsing and plotting magnetic data from Quantum Design instrumentation. 
 
 ## Setup
 The folder containing these scripts should be added to your MATLAB path. This can be done by clicking the **Set Path** button under the **Home** tab. See [this](https://www.mathworks.com/help/matlab/matlab_env/add-remove-or-reorder-folders-on-the-search-path.html) for more details.
