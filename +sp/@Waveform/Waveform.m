@@ -9,15 +9,13 @@ classdef Waveform < sp.DataFile
     end
 
     methods
-        parse(obj, waveformData);
-
         function obj = Waveform(filename)
             obj = obj@sp.DataFile(filename); 
             obj.parse();
         end
-
-        function plot(obj)
-
-        end
+    end
+    
+    methods (Access = private)
+        parse(obj, waveformData);
     end
 end

@@ -3,12 +3,6 @@ classdef AC < sp.DataFile
         function obj = AC(filename)
             obj = obj@sp.DataFile(filename);
             obj.parse();
-            %{
-            [obj, updated] = obj.update(filename);
-            if updated || isempty(obj.data)
-                obj.parse();
-            end
-            %}
         end
     end
 

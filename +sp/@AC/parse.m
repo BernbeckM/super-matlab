@@ -7,7 +7,7 @@ function parse(obj)
     numToDelete = nnz(toDelete);
     if numToDelete ~= 0
         toAdd(toDelete, :) = [];
-        disp(['Truncated ' num2str(numToDelete) ' datapoints from ' obj.filename]);
+        disp(['truncated ' num2str(numToDelete) ' datapoints from ' obj.filename]);
     end
     obj.data = [obj.data; toAdd];
 

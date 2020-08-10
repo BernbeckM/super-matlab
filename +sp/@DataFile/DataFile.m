@@ -18,7 +18,7 @@ classdef DataFile < handle & matlab.mixin.Heterogeneous
         EicosaneXdm = -0.00024306;
     end
 
-    % TODO: normalize naming convetion, use enums
+    % TODO: normalize naming convetion, use enums?
     properties (Access = protected, Constant)
         MEASUREMENT_TYPES = {'AC', 'DC', 'RSO', 'VSM'};
         INSTRUMENT_TYPES = {'MPMS3', 'MPMSXL'};
@@ -53,6 +53,7 @@ classdef DataFile < handle & matlab.mixin.Heterogeneous
             obj.parse(filename);
         end
 
+        % currently unused
         function [obj, updated] = update(obj, filename)
             database_name = 'super_datafiles.mat';
             database_mat = matfile(database_name, 'Writable', true);
@@ -90,7 +91,6 @@ classdef DataFile < handle & matlab.mixin.Heterogeneous
     end
 
     methods (Access = private)
-        % TODO: convert next two methods to static
         idx = get_measurement_type(obj, file_head);
         parse(obj, filename);
     end
