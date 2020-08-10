@@ -1,15 +1,13 @@
-function fitTau(obj, varargin)
+function fit(obj, varargin)
     p = inputParser;
     validScalarPosInt = @(x) isnumeric(x) && isscalar(x) && (mod(x, 1) == 0) && (x >= 0);
     p.addParameter('CC', 1, validScalarPosInt);
     p.addParameter('HN', 0, validScalarPosInt);
     p.parse(varargin{:});
 
-    obj.nCC = p.Results.CC;
-    obj.nHN = p.Results.HN;
-    obj.Fits = table;
-    obj.Model = table;
-    obj.Errors = table;
+    obj.fits = table;
+    obj.model_data = table;
+    obj.model_error = table;
 
     ccx0 = [1/(2*pi*((max(obj.Parsed.Frequency) + min(obj.Parsed.Frequency))/2)), 0.3, 1];
     cclb = [1/(5*2*pi*max(obj.Parsed.Frequency)), 0, 0.1];
@@ -55,7 +53,7 @@ function fitTau(obj, varargin)
         disp(['Fitting ' num2str(temps(a)) 'K data.']);
         rows = obj.Parsed.TemperatureRounded == temps(a);
         xmodel = logspace(log10(min(obj.Parsed.Frequency(rows))), log10(max(obj.Parsed.Frequency(rows))), 100)';
-        
+
         problem = createOptimProblem('fmincon', 'x0', x0, ...
                                      'objective', @(b) objective(obj.Parsed.Frequency(rows), [obj.Parsed.ChiIn(rows), obj.Parsed.ChiOut(rows)], p.Results.CC, p.Results.HN, b), ...
                                      'lb', lb, 'ub', ub, 'options', opts); % , 'nonlcon', @(b) constraints(p.Results.CC, p.Results.HN, b)
@@ -104,35 +102,5 @@ function fitTau(obj, varargin)
         obj.Fits = [obj.Fits; new_fits];
         obj.Model = [obj.Model; new_model];
         obj.Errors = [obj.Errors; new_errors];
-    end
-end
-
-% the model function that we minimize with GlobalSearch
-function output = objective(xdata, ydata, cc, hn, b)
-    ycalc = DebyeData.model(xdata, cc, hn, b);
-    yreal = real(ycalc);
-    yimag = -imag(ycalc);
-
-    output = sum((ydata(:, 1) - yreal).^2) + sum((ydata(:, 2) - yimag).^2);
-end
-
-% this type of function definition is required for confidence interval
-% calculation, apparently
-function output = modelWrapper(xdata, cc, hn, b)
-    ycalc = DebyeData.model(xdata, cc, hn, b);
-    yreal = real(ycalc);
-    yimag = -imag(ycalc);
-
-    output(:, 1) = yreal;
-    output(:, 2) = yimag;
-end
-
-% some papers put constraints on alpha and beta when using the HN function,
-% wikipedia makes no mention of it
-function [c, ceq] = constraints(cc, hn, b)
-    c = [];
-    ceq = [];
-    for a = cc:(cc + hn - 1)
-        % todo 
     end
 end

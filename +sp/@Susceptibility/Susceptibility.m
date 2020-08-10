@@ -1,4 +1,5 @@
-classdef SusceptibilityData < SQUIDData
+classdef Susceptibility < sp.DataFile
+    %{
     methods
         function obj = SusceptibilityData(varargin)
             obj = obj@SQUIDData(varargin{:});
@@ -12,4 +13,5 @@ classdef SusceptibilityData < SQUIDData
     methods (Access = private)
         parseSusceptibilityData(obj);
     end
+    %}
 end

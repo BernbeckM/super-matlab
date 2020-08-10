@@ -14,7 +14,7 @@ classdef PlotHelper
     methods (Static)
         function plotDataset(x, y, group, plotType, colorSpacing, marker, varargin)
             if isempty(x) || isempty(y), return; end
-            PlotHelper.setDefaults();
+            sp.PlotHelper.setDefaults();
             p = inputParser;
             p.addParameter('Axes', gca);
             p.parse(varargin{:});
@@ -30,15 +30,15 @@ classdef PlotHelper
                 switch plotType
                     case 'scatter'
                         if toggle(a), handleVis = 'on'; end
-                        newScatter = scatter(p.Results.Axes, x(rows), y(rows), [], PlotHelper.colorSelector(groups(a), toggle(a)), 'filled', marker, 'MarkerFaceAlpha', 1 - (PlotHelper.colorAlpha*(~toggle(a))), 'DisplayName', [num2str(groups(a)) ' K'], 'HandleVisibility', handleVis);
+                        newScatter = scatter(p.Results.Axes, x(rows), y(rows), [], sp.PlotHelper.colorSelector(groups(a), toggle(a)), 'filled', marker, 'MarkerFaceAlpha', 1 - (sp.PlotHelper.colorAlpha*(~toggle(a))), 'DisplayName', [num2str(groups(a)) ' K'], 'HandleVisibility', handleVis);
                         if ~toggle(a)
                             uistack(newScatter, 'bottom')
                         else
                             scatter_data = [scatter_data; newScatter];
                         end
                     case 'line'
-                        newLine = plot(p.Results.Axes, x(rows), y(rows), 'Color', PlotHelper.colorSelector(groups(a), toggle(a)), 'HandleVisibility', handleVis);
-                        newLine.Color(4) = 1 - (PlotHelper.colorAlpha*(~toggle(a)));
+                        newLine = plot(p.Results.Axes, x(rows), y(rows), 'Color', sp.PlotHelper.colorSelector(groups(a), toggle(a)), 'HandleVisibility', handleVis);
+                        newLine.Color(4) = 1 - (sp.PlotHelper.colorAlpha*(~toggle(a)));
                         uistack(newLine, 'bottom');
                         line_data = [line_data; newLine];
                 end
@@ -49,16 +49,16 @@ classdef PlotHelper
         function color = colorSelector(temperature, a)
             %color = hsv2rgb([1-tanh(temperature/30)' double(mod(a + 3, 3)) ones(length(temperature), 1)*0.9]);
             cmap = jet(100);
-            temperature = floor(rescale(temperature, 1, 100, 'InputMin', PlotHelper.coldTemp, 'InputMax', PlotHelper.hotTemp));
+            temperature = floor(rescale(temperature, 1, 100, 'InputMin', sp.PlotHelper.coldTemp, 'InputMax', sp.PlotHelper.hotTemp));
             temperature = rgb2hsv(cmap(temperature, :));
             color = hsv2rgb([temperature(:, 1) double(mod(a + 3, 3))*temperature(:, 2) temperature(:, 3)*0.85]);
         end
 
         function setDefaults()
-            set(groot,'defaultAxesBox', PlotHelper.defaultAxesBox);
-            set(groot,'defaultLineLineWidth', PlotHelper.defaultLineLineWidth);
-            set(groot,'defaultAxesLineWidth', PlotHelper.defaultAxesLineWidth);
-            set(groot,'defaultAxesFontWeight', PlotHelper.defaultAxesFontWeight);
+            set(groot,'defaultAxesBox', sp.PlotHelper.defaultAxesBox);
+            set(groot,'defaultLineLineWidth', sp.PlotHelper.defaultLineLineWidth);
+            set(groot,'defaultAxesLineWidth', sp.PlotHelper.defaultAxesLineWidth);
+            set(groot,'defaultAxesFontWeight', sp.PlotHelper.defaultAxesFontWeight);
             set(groot,'defaultLegendBox', 'off');
             hold on;
             axis square;
