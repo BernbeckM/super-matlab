@@ -27,11 +27,17 @@ function plot(obj, plot_type, varargin)
             xscale = 'linear';
             labels = {'\chi\prime (emu mol^{-1})', '\chi\prime\prime (emu mol^{-1})'};
         case 'arrhenius'
+            return;
             if isempty(obj.fits)
                 disp('data is not fit');
                 return;
             end
-            
+            xdata = 1 ./ obj.fits.TemperatureRounded;
+            ydata = log(obj.fits.cc_tau_1);
+            xmodel = [];
+            ymodel = [];
+            scale = 'linear';
+            labels = {'1/T', 'log(\tau)'};
     end
 
     p = inputParser;

@@ -1,4 +1,4 @@
-function load(obj, type)
+function load(obj)
     file = uigetfile('*.dat', 'MultiSelect', 'on');
     if ~iscell(file), file = {file}; end
 

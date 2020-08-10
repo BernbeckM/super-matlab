@@ -9,7 +9,7 @@ classdef Impedence < handle
     methods
         fit(obj, varargin);
         data = get_data(obj);
-        load(obj, type);
+        load(obj);
         plot(obj, plot_type, varargin);
     end
 
