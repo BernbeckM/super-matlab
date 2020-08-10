@@ -2,7 +2,7 @@ classdef Impedence < handle
     properties
         datafiles   = [];
         fits        = table;
-        model_data  = table;
+        model_data  = cell2table(cell(0,4), 'VariableNames', {'TemperatureRounded', 'Frequency', 'ChiIn', 'ChiOut'});
         model_error = table;
     end
 
