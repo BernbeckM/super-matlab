@@ -1,4 +1,4 @@
-# qdsquid-dataplot
+# super
 A collection of MATLAB functions that parse and fit data from a Quantum Design MPMS 3 and MPMS XL SQUID magnetometers.
 
 ## Setup
@@ -26,21 +26,18 @@ Datafile headers are parsed and used to perform conversions and corrections to t
 * **Length**: Sample molecular weight in g mol<sup>-1</sup>
 * **Shape**: Sample molar diamagnetism
 
-## &tau; model classes
-** this section is out-of-date **
-#### `ACData`
-Parses and fits standard AC susceptibility data to a generalized Debye model.
+## Impedence data classes
+#### `AC`
+Parses and fits standard AC susceptibility data.
 
-#### `WaveformData`
-Performs the Fourier transform on DC, RSO, or VSM moment data and fits the resulting susceptibilities to a generalized Debye model. Details about this method can be found in: https://arxiv.org/abs/1907.05962
-
-## Export format
-Data tables are exported to .xlsx files using `objectName.writeData()`. Sheet 1 contains `objectName.Parsed`. &tau; model classe also contain sheets 2, 3, and 4 which correspond to `objectName.Fits`, `objectName.Errors`, and `objectName.Model`.
+#### `Waveform`
+Performs the Fourier transform on DC, RSO, or VSM moment data. Details about this method can be found in: https://arxiv.org/abs/1907.05962
 
 ## Caveat emptor
 The current release of this code package does little in the way of error handling (e.g. class/data mismatch). Therefore, the occassional file parsing error or user oversight will most likely be met with a potentially unhelpful MATLAB error message.
 
 ## Example usage
+** this section is out-of-date **
 Example files can be found in the _examples_ directory
 ### (1) AC susceptibility
 **_Data import:_**
