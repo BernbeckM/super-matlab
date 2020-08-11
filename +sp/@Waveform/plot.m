@@ -1,17 +1,16 @@
 function plot(obj, plot_type, varargin)
+    group = obj.spectra.Datablock;
     switch plot_type
         case 'fftm'
-            disp('fftm');
+            xdata = obj.spectra.Frequency;
+            ydata = abs(obj.spectra.hsDFTM);
         case 'fftf'
-            disp('fftf');
+            xdata = obj.spectra.Frequency;
+            ydata = abs(obj.spectra.hsDFTF);
         otherwise
             plot@sp.Impedence(obj, plot_type, varargin{:});
+            return
     end
-    %{
-    p = inputParser;
-    p.addParameter('Temperature', min(obj.Parsed.TemperatureRounded));
-    p.parse(varargin{:});
-    PlotHelper.plotDataset(obj.Spectra.Frequency, abs(obj.Spectra.hsDFTM), obj.Spectra.Datablock, 'line', 3, '*', p.Unmatched);
+    sp.PlotHelper.plot(xdata, ydata, group);
     set(gca, 'XScale', 'log');
-    %}
 end
