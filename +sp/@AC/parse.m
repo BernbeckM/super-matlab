@@ -11,8 +11,8 @@ function parse(obj)
     end
     obj.data = [obj.data; toAdd];
 
-    reorder_idxs = [1:2, width(obj.data), 3:(width(obj.data) - 1)];
-    obj.data = obj.data(:, reorder_idxs);
+    %reorder_idxs = [1:2, width(obj.data), 3:(width(obj.data) - 1)];
+    %obj.data = obj.data(:, reorder_idxs);
 
     obj.data = sortrows(obj.data, {'TemperatureRounded', 'Frequency'});
 end

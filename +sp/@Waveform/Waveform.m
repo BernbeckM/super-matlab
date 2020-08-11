@@ -1,4 +1,4 @@
-classdef Waveform < sp.DataFile
+classdef Waveform < sp.Impedence
     properties
         spectra = table;
     end
@@ -9,8 +9,10 @@ classdef Waveform < sp.DataFile
     end
 
     methods
+        plot(obj, plot_type, varargin);
+        
         function obj = Waveform(filename)
-            obj = obj@sp.DataFile(filename); 
+            obj = obj@sp.Impedence(filename); 
             obj.parse();
         end
     end

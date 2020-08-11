@@ -1,7 +1,7 @@
-classdef AC < sp.DataFile
+classdef AC < sp.Impedence
     methods
         function obj = AC(filename)
-            obj = obj@sp.DataFile(filename);
+            obj = obj@sp.Impedence(filename);
             obj.parse();
         end
     end

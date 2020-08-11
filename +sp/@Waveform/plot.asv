@@ -1,9 +1,7 @@
 function plot(obj, plot_type, varargin)
     switch plot_type
-        case 'fftm'
-            disp('fftm');
-        case 'fftf'
-            disp('fftf');
+        case 'fft_'
+            disp('spectra Waveform');
         otherwise
             plot@sp.Impedence(obj, plot_type, varargin{:});
     end

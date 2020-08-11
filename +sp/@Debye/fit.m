@@ -57,10 +57,10 @@ function fit(obj, varargin)
         xmodel = logspace(log10(min(data.Frequency(rows))), log10(max(data.Frequency(rows))), 100)';
 
         problem = createOptimProblem('fmincon', 'x0', x0, ...
-                                     'objective', @(b) sp.Impedence.objective(data.Frequency(rows), [data.ChiIn(rows), data.ChiOut(rows)], p.Results.CC, p.Results.HN, b), ...
+                                     'objective', @(b) sp.Debye.objective(data.Frequency(rows), [data.ChiIn(rows), data.ChiOut(rows)], p.Results.CC, p.Results.HN, b), ...
                                      'lb', lb, 'ub', ub, 'options', opts); % , 'nonlcon', @(b) constraints(p.Results.CC, p.Results.HN, b)
         [x0, ~, ~, ~, ~] = gs.run(problem);
-        [x02, ~, residual, ~, ~, ~, jacobian] = lsqcurvefit(@(b, xdata) sp.Impedence.model_wrapper(xdata, p.Results.CC, p.Results.HN, b), x0, data.Frequency(rows), [data.ChiIn(rows), data.ChiOut(rows)], [], [], opts2);
+        [x02, ~, residual, ~, ~, ~, jacobian] = lsqcurvefit(@(b, xdata) sp.Debye.model_wrapper(xdata, p.Results.CC, p.Results.HN, b), x0, data.Frequency(rows), [data.ChiIn(rows), data.ChiOut(rows)], [], [], opts2);
         ci = nlparci(x02, residual, 'Jacobian', jacobian);
 
         cc_entries = [];
@@ -98,7 +98,7 @@ function fit(obj, varargin)
         x0 = [cc_entries, hn_entries, x0(end)];
         new_errors = array2table([temps(a), cc_errors, hn_errors, ci(end,1), ci(end,2)], 'VariableNames', [error_vars{:}]);
         new_fits = array2table([temps(a), x0], 'VariableNames', [fit_vars{:}]);
-        ymodel = sp.Impedence.model(xmodel, p.Results.CC, p.Results.HN, x0);
+        ymodel = sp.Debye.model(xmodel, p.Results.CC, p.Results.HN, x0);
         new_model = array2table([temps(a).*ones(length(xmodel), 1), xmodel, real(ymodel), -imag(ymodel)], 'VariableNames', model_vars);
 
         obj.fits = [obj.fits; new_fits];
