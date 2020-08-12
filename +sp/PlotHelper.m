@@ -29,10 +29,35 @@ classdef PlotHelper
             end
         end
 
-        function make_pretty(cold, hot, spacing)
+        function make_legend(units)
+            current_axes = gca();
+            objs = findobj('Parent', current_axes, '-regexp', 'Tag', '[^'']', 'Type', 'scatter', 'MarkerFaceAlpha', 1);
+            
+            tags = [];
+            colors = [];
+            for a = 1:length(objs)
+                tags = [tags; str2double(objs(a).Tag)];
+                colors = [colors; objs(a).CData];
+            end
+            [tags, ia, ~] = unique(tags);
+            colors = colors(ia, :);
+
+            dummy_plots = [];
+            for a = 1:length(tags)
+                dummy_plots = [dummy_plots; line(current_axes, NaN, NaN, 'LineStyle', 'none', 'Marker', 'none', 'Color', 'none')];
+            end
+            
+            tags = arrayfun(@(x, y) sprintf('\\color[rgb]{%f,%f,%f}%.1f %s', colors(y, 1), colors(y, 2), colors(y, 3), x, units), tags, [1:size(colors, 1)]', 'UniformOutput', false);
+            
+            legend(dummy_plots, tags, 'Interpreter', 'tex');
+
+        end
+        
+        function make_pretty(cold, hot, spacing, units)
             sp.PlotHelper.set_color(cold, hot);
             sp.PlotHelper.set_spacing(spacing);
             sp.PlotHelper.sort_plots();
+            sp.PlotHelper.make_legend(units);
         end
 
         function set_color(cold, hot)
@@ -57,10 +82,10 @@ classdef PlotHelper
 
         function sort_plots()
             current_axes = gca();
-            objs = findobj('Parent', current_axes, '-regexp','Tag','[^'']');
+            objs = findobj('Parent', current_axes, '-regexp', 'Tag', '[^'']');
             [~, idxs] = sort(get(objs, 'Tag'));
             current_axes.Children = objs(idxs);
-            objs = findobj('Parent', current_axes, '-regexp','Tag','[^'']', 'Type', 'scatter');
+            objs = findobj('Parent', current_axes, '-regexp', 'Tag', '[^'']', 'Type', 'scatter');
             uistack(objs, 'top');
         end
 
