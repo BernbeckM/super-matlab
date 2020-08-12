@@ -2,7 +2,7 @@ classdef Relaxation < handle
     properties
         data = table;
         fits = table;
-        model_data = table;
+        model = table;
     end
     
     methods
