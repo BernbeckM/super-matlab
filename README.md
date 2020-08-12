@@ -1,4 +1,4 @@
-# super
+# <img src="super.png" height="75">
 A MATLAB package for parsing and plotting magnetic data from Quantum Design instrumentation. 
 
 ## Setup
