@@ -1,68 +1,104 @@
 function fit(obj, varargin)
     data = obj.get_data();
 
-    p = inputParser;
+    p = inputParser();
     validScalarPosInt = @(x) isnumeric(x) && isscalar(x) && (mod(x, 1) == 0) && (x >= 0);
-    p.addParameter('CC', 1, validScalarPosInt);
-    p.addParameter('HN', 0, validScalarPosInt);
+    p.addRequired('fit_type', @ischar);
+    p.addOptional('fit_num', 0, validScalarPosInt);
     p.parse(varargin{:});
-
-    obj.fits = table;
-    obj.model_data = table;
-    obj.model_error = table;
-
-    ccx0 = [1/(2*pi*((max(data.Frequency) + min(data.Frequency))/2)), 0.3, 1];
-    cclb = [1/(5*2*pi*max(data.Frequency)), 0, 0.1];
-    %ccub = [200, 0.8, 20];
-    ccub = [1/(0.01*2*pi*min(data.Frequency)), 0.8, 20];
-    hnx0 = [1/(2*pi*((max(data.Frequency) + min(data.Frequency))/2)), 0.9, 1, 5];
-    hnlb = [1/(2*pi*max(data.Frequency)*1.05), 0.01, 0.01, 1E-1];
-    hnub = [1/(2*pi*min(data.Frequency)*0.95), 1, 1, 55];
-
-    chiInfx0 = [0];
-    chiInflb = [1E-8];
-    chiInfub = [10];
-    %chiInfub = [max(data.ChiOut)];
-
-    x0 = [repmat(ccx0, 1, p.Results.CC), repmat(hnx0, 1, p.Results.HN), chiInfx0];
-    lb = [repmat(cclb, 1, p.Results.CC), repmat(hnlb, 1, p.Results.HN), chiInflb];
-    ub = [repmat(ccub, 1, p.Results.CC), repmat(hnub, 1, p.Results.HN), chiInfub];
-
-    opts = optimoptions(@fmincon, 'Algorithm', 'interior-point', ...
-                                  'FunctionTolerance', 1e-23, 'OptimalityTolerance', 1e-23, 'StepTolerance', 1e-23, ...
-                                  'ObjectiveLimit', 1e-23, 'Display', 'off', 'ConstraintTolerance', 1E-23);
-    opts2 = optimoptions('lsqcurvefit', 'Algorithm', 'Levenberg-Marquardt', ...
-                                  'FunctionTolerance', 1e-10, 'OptimalityTolerance', 1e-10, 'StepTolerance', 1e-10, ...
-                                  'Display', 'off');
-    gs = GlobalSearch('MaxTime', 30, 'Display', 'off');
-
+    
+    cc = contains(p.Results.fit_type, 'cc');
+    hn = contains(p.Results.fit_type, 'hn');
+    if ~cc && ~hn, error('unsupported fit type, use either cc or hn'); end
+    
+    obj.fits = [];
+    obj.model_error = [];
+    obj.model_data = [];
+    
+    model_data_vars = {'TemperatureRounded', 'Frequency', 'ChiIn', 'ChiOut'};
+    
+    max_fit_num = 1;
     temps = unique(data.TemperatureRounded);
-    %xmodel = logspace(log10(min(data.Frequency)), log10(max(data.Frequency)), 100)';
-
-    cc_vars = {'cc_tau_', 'cc_alpha_', 'cc_chi_t_'};
-    cc_vars = cellfun(@(x, y) [x num2str(y)], repmat(cc_vars, 1, p.Results.CC), num2cell(ceil((1:3*p.Results.CC)/3)), 'UniformOutput', false);
-    cc_error_vars = {'cc_tau_ci_neg_', 'cc_tau_ci_pos_', 'cc_alpha_ci_neg_', 'cc_alpha_ci_pos_', 'cc_chi_t_ci_neg_', 'cc_chi_t_ci_pos_'};
-    cc_error_vars = cellfun(@(x, y) [x num2str(y)], repmat(cc_error_vars, 1, p.Results.CC), num2cell(ceil((1:6*p.Results.CC)/6)), 'UniformOutput', false);
-    hn_vars = {'hn_tau_', 'hn_alpha_', 'hn_beta_', 'hn_chi_t_'};
-    hn_vars = cellfun(@(x, y) [x num2str(y)], repmat(hn_vars, 1, p.Results.HN), num2cell(ceil((1:4*p.Results.HN)/4)), 'UniformOutput', false);
-    hn_error_vars = {'hn_tau_ci_neg_', 'hn_tau_ci_pos_', 'hn_alpha_ci_neg_', 'hn_alpha_ci_pos_', 'hn_beta_ci_neg_', 'hn_beta_ci_pos_', 'hn_chi_t_ci_neg_', 'hn_chi_t_ci_pos_'};
-    hn_error_vars = cellfun(@(x, y) [x num2str(y)], repmat(hn_error_vars, 1, p.Results.HN), num2cell(ceil((1:8*p.Results.HN)/8)), 'UniformOutput', false);
-    fit_vars = {'TemperatureRounded', cc_vars, hn_vars, 'chi_s'};
-    error_vars = {'TemperatureRounded', cc_error_vars, hn_error_vars, 'chi_s_ci_neg', 'chi_s_ci_pos'};
-    model_vars = {'TemperatureRounded', 'Frequency', 'ChiIn', 'ChiOut'};
-
+    warning('off','all');
     for a = 1:length(temps)
-        disp(['Fitting ' num2str(temps(a)) 'K data.']);
+        disp(['fitting ' num2str(temps(a)) ' K data']);
         rows = data.TemperatureRounded == temps(a);
+        
+        residual_old = 1E5;
+        if ~(p.Results.fit_num == 0)
+            fit_num = p.Results.fit_num;
+        else
+            fit_num = 1;
+        end
+        
+        while 1
+            disp(['    trying ' num2str(fit_num) ' process(es)']);
+            [x0, lb, ub] = make_bounds(data, p.Results.fit_type, fit_num);
+            
+            problem = createOptimProblem('fmincon', 'x0', x0, ...
+                'objective', @(b) sp.Debye.objective(data.Frequency(rows), ...
+                [data.ChiIn(rows), data.ChiOut(rows)], ...
+                fit_num * cc, ...
+                fit_num * hn, b), ...
+                'lb', lb, 'ub', ub, 'options', obj.fmincon_opts);
+
+            [x0, ~, ~, ~, ~] = obj.gs.run(problem);
+            [x02, ~, residual, ~, ~, ~, jacobian] = ...
+                lsqcurvefit(@(b, xdata) sp.Debye.model_wrapper(xdata, fit_num * cc, fit_num * hn, b), ...
+                x0, data.Frequency(rows), [data.ChiIn(rows), data.ChiOut(rows)], [], [], obj.lsqcurvefit_opts);
+            ci = nlparci(x02, residual, 'Jacobian', jacobian);
+            residual = sum(power(residual(:, 2), 2));
+            disp(['        residual improvement factor: ' num2str(residual_old / residual)]);
+
+            if p.Results.fit_num ~= 0
+                max_fit_num = p.Results.fit_num;
+                break; 
+            elseif ((residual_old / residual) < 7)
+                x0 = x0_old;
+                ci = ci_old;
+                fit_num = fit_num - 1;
+                if fit_num > max_fit_num, max_fit_num = fit_num; end
+                break;
+            elseif (fit_num == 3) 
+                max_fit_num = 3;
+                break;
+            else
+                residual_old = residual;
+                x0_old = x0;
+                ci_old = ci;
+                fit_num = fit_num + 1;
+            end
+        end
+        warning('on','all')
+        
         xmodel = logspace(log10(min(data.Frequency(rows))), log10(max(data.Frequency(rows))), 100)';
+        ymodel = sp.Debye.model(xmodel, fit_num * cc, fit_num * hn, x0);
+        
+        fit_padding = NaN(1, (3 - fit_num) * ((cc * 3) + (hn * 4)));
+        error_padding = NaN(1, (3 - fit_num) * ((cc * 6) + (hn * 8)));
+        ci = reshape(ci.', 1, []);
+        
+        new_fits = [temps(a), x0(1:end-1), fit_padding, x0(end)];
+        new_errors = [temps(a), ci(1:end-2), error_padding, ci(end-1:end)];
+        new_model = array2table([temps(a).*ones(length(xmodel), 1), xmodel, real(ymodel), -imag(ymodel)], 'VariableNames', model_data_vars);
 
-        problem = createOptimProblem('fmincon', 'x0', x0, ...
-                                     'objective', @(b) sp.Debye.objective(data.Frequency(rows), [data.ChiIn(rows), data.ChiOut(rows)], p.Results.CC, p.Results.HN, b), ...
-                                     'lb', lb, 'ub', ub, 'options', opts); % , 'nonlcon', @(b) constraints(p.Results.CC, p.Results.HN, b)
-        [x0, ~, ~, ~, ~] = gs.run(problem);
-        [x02, ~, residual, ~, ~, ~, jacobian] = lsqcurvefit(@(b, xdata) sp.Debye.model_wrapper(xdata, p.Results.CC, p.Results.HN, b), x0, data.Frequency(rows), [data.ChiIn(rows), data.ChiOut(rows)], [], [], opts2);
-        ci = nlparci(x02, residual, 'Jacobian', jacobian);
+        obj.fits = [obj.fits; new_fits];
+        obj.model_error = [obj.model_error; new_errors];
+        obj.model_data = [obj.model_data; new_model];
+    end
+    
+    fit_vars = make_table_vars(p.Results.fit_type, max_fit_num);
+    model_error_vars = make_table_vars([p.Results.fit_type '_error'], max_fit_num);
+    
+    obj.fits = rmmissing(obj.fits, 2, 'MinNumMissing', size(obj.fits, 1));
+    obj.fits = array2table(obj.fits, 'VariableNames', fit_vars);
+    
+    obj.model_error = rmmissing(obj.model_error, 2, 'MinNumMissing', size(obj.model_error, 1));
+    obj.model_error = array2table(obj.model_error, 'VariableNames', model_error_vars);
+end
 
+function output = sort_fits(fits, fit_type)
+%{
         cc_entries = [];
         cc_errors = [];
         if p.Results.CC > 0
@@ -96,13 +132,44 @@ function fit(obj, varargin)
             end
         end
         x0 = [cc_entries, hn_entries, x0(end)];
-        new_errors = array2table([temps(a), cc_errors, hn_errors, ci(end,1), ci(end,2)], 'VariableNames', [error_vars{:}]);
-        new_fits = array2table([temps(a), x0], 'VariableNames', [fit_vars{:}]);
-        ymodel = sp.Debye.model(xmodel, p.Results.CC, p.Results.HN, x0);
-        new_model = array2table([temps(a).*ones(length(xmodel), 1), xmodel, real(ymodel), -imag(ymodel)], 'VariableNames', model_vars);
+%}
+end
 
-        obj.fits = [obj.fits; new_fits];
-        obj.model_data = [obj.model_data; new_model];
-        obj.model_error = [obj.model_error; new_errors];
+function [x0, lb, ub] = make_bounds(data, fit_type, num)
+
+    min_tau = 1 / (1.2 * 2 * pi * max(data.Frequency));
+    max_tau = 1 / (0.8 * 2 * pi * min(data.Frequency));
+    
+    switch fit_type
+        case 'cc'
+            x0 = [mean([min_tau max_tau]), 0.3, 1];
+            lb = [min_tau, 0, 0.1];
+            ub = [max_tau, 0.8, 20];
+        case 'hn'
+            x0 = [mean([min_tau max_tau]), 0.9, 1, 5];
+            lb = [min_tau, 0.01, 0.01, 1E-1];
+            ub = [max_tau, 1, 1, 55];
     end
+    chi_s_x0 = [0];
+    chi_s_lb = [1E-8];
+    chi_s_ub = [10];
+
+    x0 = [repmat(x0, 1, num), chi_s_x0];
+    lb = [repmat(lb, 1, num), chi_s_lb];
+    ub = [repmat(ub, 1, num), chi_s_ub];
+end
+
+function output = make_table_vars(table_type, num)
+    fit_types = {'cc', 'hn', 'cc_error', 'hn_error'};
+    cc_vars = {'cc_tau_', 'cc_alpha_', 'cc_chi_t_'};
+    hn_vars = {'hn_tau_', 'hn_alpha_', 'hn_beta_', 'hn_chi_t_'};
+    cc_error_vars = {'cc_tau_ci_neg_', 'cc_tau_ci_pos_', 'cc_alpha_ci_neg_', 'cc_alpha_ci_pos_', 'cc_chi_t_ci_neg_', 'cc_chi_t_ci_pos_'};
+    hn_error_vars = {'hn_tau_ci_neg_', 'hn_tau_ci_pos_', 'hn_alpha_ci_neg_', 'hn_alpha_ci_pos_', 'hn_beta_ci_neg_', 'hn_beta_ci_pos_', 'hn_chi_t_ci_neg_', 'hn_chi_t_ci_pos_'};
+    fit_vars = {cc_vars, hn_vars, cc_error_vars, hn_error_vars};
+
+    if ~contains(table_type, 'error'), chi_s = {'chi_s'}; else, chi_s = {'chi_s_neg', 'chi_s_pos'}; end
+
+    output = fit_vars{contains(fit_types, table_type)};
+    output = cellfun(@(x, y) [x num2str(y)], repmat(output, 1, num), num2cell(ceil((1:length(output)*num)/length(output))), 'UniformOutput', false);
+    output = ['TemperatureRounded', output(:)', chi_s];
 end

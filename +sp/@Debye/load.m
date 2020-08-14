@@ -2,10 +2,10 @@ function load(obj)
     file = uigetfile('*.dat', 'MultiSelect', 'on');
     if ~iscell(file), file = {file}; end
 
-    %runTypes = {'ac', 'waveform'};
-    %classTypes = {@sp.AC, @sp.Waveform};
-    %selector = contains(runTypes, type);
-
+    obj.fits = [];
+    obj.model_error = [];
+    obj.model_data = [];
+    
     for a = 1:length(file)
         if contains(file{a}, 'ACvsF')
             obj.datafiles = [obj.datafiles sp.AC(file{a})];

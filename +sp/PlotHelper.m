@@ -64,7 +64,7 @@ classdef PlotHelper
             current_axes = gca();
             cmap = jet(100);
 
-            plots = current_axes.Children;
+            plots = findobj('Parent', current_axes, '-regexp', 'Tag', '[^'']', 'Type', 'scatter');
             for a = 1:length(plots)
                 tag = str2double(plots(a).Tag);
                 temp_scaled = floor(rescale(tag, 1, length(cmap), 'InputMin', cold, 'InputMax', hot));
@@ -82,7 +82,7 @@ classdef PlotHelper
 
         function sort_plots()
             current_axes = gca();
-            objs = findobj('Parent', current_axes, '-regexp', 'Tag', '[^'']');
+            objs = findobj('Parent', current_axes);
             [~, idxs] = sort(get(objs, 'Tag'));
             current_axes.Children = objs(idxs);
             objs = findobj('Parent', current_axes, '-regexp', 'Tag', '[^'']', 'Type', 'scatter');
