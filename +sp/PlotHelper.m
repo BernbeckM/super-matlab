@@ -64,7 +64,7 @@ classdef PlotHelper
             current_axes = gca();
             cmap = jet(100);
 
-            plots = findobj('Parent', current_axes, '-regexp', 'Tag', '[^'']', 'Type', 'scatter');
+            plots = findobj('Parent', current_axes, '-regexp', 'Tag', '[^'']');
             for a = 1:length(plots)
                 tag = str2double(plots(a).Tag);
                 temp_scaled = floor(rescale(tag, 1, length(cmap), 'InputMin', cold, 'InputMax', hot));
