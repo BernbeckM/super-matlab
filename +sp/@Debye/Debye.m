@@ -15,7 +15,7 @@ classdef Debye < handle
             'Algorithm', 'Levenberg-Marquardt', ...
             'FunctionTolerance', 1e-10, 'OptimalityTolerance', 1e-10, 'StepTolerance', 1e-10, ...
             'Display', 'off');
-        gs = GlobalSearch('MaxTime', 45, 'Display', 'off', 'NumStageOnePoints', 400, 'NumTrialPoints', 2000);
+        gs = GlobalSearch('MaxTime', 45, 'Display', 'off', 'NumStageOnePoints', 200, 'NumTrialPoints', 1000);
     end
     
     methods

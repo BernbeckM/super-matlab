@@ -16,13 +16,13 @@ function fit(obj, varargin)
         return;
     end
 
-    %orbachx0 = [1, 1]; ramanx0 = [5E-5, 5]; qtmx0 = [1E-4];
-    %orbachlb = [0.1, 1E-2]; ramanlb = [1E-7, 2]; qtmlb = [1E-6];
-    %orbachub = [30, 1E3]; ramanub = [1E-1, 9]; qtmub = [1E4];
+    orbachx0 = [1, 1]; ramanx0 = [5E-1, 9]; qtmx0 = [1E-4];
+    orbachlb = [0.1, 1E-2]; ramanlb = [1E-8, 5]; qtmlb = [1E-6];
+    orbachub = [30, 1E3]; ramanub = [1E-1, 9.5]; qtmub = [1E4];
 
-    orbachx0 = [150, 1E-10]; ramanx0 = [5E-5, 5]; qtmx0 = [1E-4];
-    orbachlb = [80, 1E-13]; ramanlb = [1E-7, 2]; qtmlb = [1E-6];
-    orbachub = [220, 1E-7]; ramanub = [1E-1, 9]; qtmub = [1E4];
+    %orbachx0 = [150, 1E-10]; ramanx0 = [5E-5, 5]; qtmx0 = [1E-4];
+    %orbachlb = [80, 1E-13]; ramanlb = [1E-7, 2]; qtmlb = [1E-6];
+    %orbachub = [220, 1E-7]; ramanub = [1E-1, 9]; qtmub = [1E4];
 
     x0 = [repmat(orbachx0, 1, p.Results.orbach), repmat(ramanx0, 1, p.Results.raman), repmat(qtmx0, 1, p.Results.qtm)];
     lb = [repmat(orbachlb, 1, p.Results.orbach), repmat(ramanlb, 1, p.Results.raman), repmat(qtmlb, 1, p.Results.qtm)];
@@ -35,7 +35,7 @@ function fit(obj, varargin)
     problem = createOptimProblem('fmincon', 'x0', x0, 'objective', @(b) sp.Relaxation.objective(obj.data.Temperature, log(1./obj.data.tau), p.Results.orbach, p.Results.raman, p.Results.qtm, b), ...
                              'lb', lb, 'ub', ub, 'options', opts);
     [obj.fits, ~, ~, ~, ~] = gs.run(problem);
-
+    obj.fits
     xmodel = logspace(log10(min(obj.data.Temperature)), log10(max(obj.data.Temperature)), 100)';
     ymodel = sp.Relaxation.model(xmodel, p.Results.orbach, p.Results.raman, p.Results.qtm, obj.fits);
     varnames = {repmat({'Ueff', 'tau_0'}, 1, p.Results.orbach), repmat({'C', 'n'}, 1, p.Results.raman), repmat({'qtm'}, 1, p.Results.qtm)};

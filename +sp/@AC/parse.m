@@ -3,7 +3,7 @@ function parse(obj)
 
     toAdd.TemperatureRounded = round(toAdd.Temperature / 0.02) * 0.02;
     toAdd{:, {'ChiIn', 'ChiInErr', 'ChiOut', 'ChiOutErr'}} = toAdd{:, {'ChiIn', 'ChiInErr', 'ChiOut', 'ChiOutErr'}} ./ obj.header.Moles;
-    toDelete = (toAdd.ChiIn < -0.1) | (toAdd.ChiOut < -0.1) | (toAdd.ChiOutErr > 0.0075) | (toAdd.ChiOut > 30);
+    toDelete = (toAdd.ChiIn < -0.05) | (toAdd.ChiOut < -0.05) | (toAdd.ChiOutErr > 0.0075) | (toAdd.ChiOut > 30);
     numToDelete = nnz(toDelete);
     if numToDelete ~= 0
         toAdd(toDelete, :) = [];

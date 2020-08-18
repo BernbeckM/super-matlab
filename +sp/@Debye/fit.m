@@ -33,8 +33,8 @@ function fit(obj, varargin)
         
         while 1
             disp(['    trying ' num2str(fit_num) ' process(es)']);
-            [x0, lb, ub] = make_bounds(data, p.Results.fit_type, fit_num);
-            
+            [x0, lb, ub] = make_bounds(data.Frequency(rows), p.Results.fit_type, fit_num);
+            disp(x0);
             problem = createOptimProblem('fmincon', 'x0', x0, ...
                 'objective', @(b) sp.Debye.objective(data.Frequency(rows), ...
                 [data.ChiIn(rows), data.ChiOut(rows)], ...
@@ -135,26 +135,29 @@ function output = sort_fits(fits, fit_type)
 %}
 end
 
-function [x0, lb, ub] = make_bounds(data, fit_type, num)
-
-    min_tau = 1 / (1.2 * 2 * pi * max(data.Frequency));
-    max_tau = 1 / (0.8 * 2 * pi * min(data.Frequency));
+function [x0, lb, ub] = make_bounds(frequency, fit_type, num)
+    min_tau = 1 / (1.05 * 2 * pi * max(frequency));
+    max_tau = 1 / (0.95 * 2 * pi * min(frequency));
+    rands = 10.^(((log10(max_tau) - log10(min_tau)) .* rand(1, num)) + log10(min_tau));
     
     switch fit_type
         case 'cc'
-            x0 = [mean([min_tau max_tau]), 0.3, 1];
-            lb = [min_tau, 0, 0.1];
-            ub = [max_tau, 0.8, 20];
+            idxs = 1:3:(num * 3);
+            x0 = [mean([min_tau max_tau]), 0.05, 1];
+            lb = [min_tau, 1E-7, 0.1];
+            ub = [max_tau, 0.2, 10];
         case 'hn'
+            idxs = 1:4:(num * 4);
             x0 = [mean([min_tau max_tau]), 0.9, 1, 5];
             lb = [min_tau, 0.01, 0.01, 1E-1];
             ub = [max_tau, 1, 1, 55];
     end
-    chi_s_x0 = [0];
-    chi_s_lb = [1E-8];
-    chi_s_ub = [10];
+    chi_s_x0 = [1E-3];
+    chi_s_lb = [1E-4];
+    chi_s_ub = [1E-1];
 
     x0 = [repmat(x0, 1, num), chi_s_x0];
+    x0(idxs) = rands;
     lb = [repmat(lb, 1, num), chi_s_lb];
     ub = [repmat(ub, 1, num), chi_s_ub];
 end

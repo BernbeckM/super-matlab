@@ -87,6 +87,8 @@ classdef PlotHelper
             current_axes.Children = objs(idxs);
             objs = findobj('Parent', current_axes, '-regexp', 'Tag', '[^'']', 'Type', 'scatter');
             uistack(objs, 'top');
+            objs = findobj('Parent', current_axes, '-regexp', 'Tag', '[^'']', 'Type', 'scatter', 'MarkerFaceAlpha', 0.5);
+            uistack(objs, 'bottom');
         end
 
         function set_spacing(spacing)
