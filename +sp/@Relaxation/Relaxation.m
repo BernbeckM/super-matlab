@@ -16,7 +16,7 @@ classdef Relaxation < handle
     end
 
     methods (Static)
-        output = model(xdata, orbach, raman, qtm, b);
-        output = objective(xdata, ydata, orbach, raman, qtm, b);
+        output = model(xdata, orbach, raman, qtm, dipole, b);
+        output = objective(xdata, ydata, orbach, raman, qtm, dipole, b);
     end
 end
