@@ -19,5 +19,7 @@ function parse(obj)
     to_add.ChiT = to_add.Chi .* to_add.Temperature;
     to_add.ChiTErr = to_add.ChiErr .* to_add.Temperature;
     
+    to_add.TemperatureRounded = round(to_add.Temperature ./ 0.1) .* 0.1;
+    
     obj.data = [obj.data; to_add];
 end
