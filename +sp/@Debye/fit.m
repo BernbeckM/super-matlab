@@ -34,7 +34,7 @@ function fit(obj, varargin)
         while 1
             disp(['    trying ' num2str(fit_num) ' process(es)']);
             [x0, lb, ub] = make_bounds(data.Frequency(rows), p.Results.fit_type, fit_num);
-            disp(x0);
+            
             problem = createOptimProblem('fmincon', 'x0', x0, ...
                 'objective', @(b) sp.Debye.objective(data.Frequency(rows), ...
                 [data.ChiIn(rows), data.ChiOut(rows)], ...
@@ -69,6 +69,9 @@ function fit(obj, varargin)
                 fit_num = fit_num + 1;
             end
         end
+        sorted = sort_fits(x0, ci, p.Results.fit_type, fit_num);
+        x0 = sorted{1}; ci = sorted{2};
+        
         warning('on','all')
         
         xmodel = logspace(log10(min(data.Frequency(rows))), log10(max(data.Frequency(rows))), 100)';
@@ -76,7 +79,7 @@ function fit(obj, varargin)
         
         fit_padding = NaN(1, (3 - fit_num) * ((cc * 3) + (hn * 4)));
         error_padding = NaN(1, (3 - fit_num) * ((cc * 6) + (hn * 8)));
-        ci = reshape(ci.', 1, []);
+        %ci = reshape(ci.', 1, []);
         
         new_fits = [temps(a), x0(1:end-1), fit_padding, x0(end)];
         new_errors = [temps(a), ci(1:end-2), error_padding, ci(end-1:end)];
@@ -97,8 +100,7 @@ function fit(obj, varargin)
     obj.model_error = array2table(obj.model_error, 'VariableNames', model_error_vars);
 end
 
-function output = sort_fits(fits, fit_type)
-%{
+    %{
         cc_entries = [];
         cc_errors = [];
         if p.Results.CC > 0
@@ -133,19 +135,37 @@ function output = sort_fits(fits, fit_type)
         end
         x0 = [cc_entries, hn_entries, x0(end)];
 %}
+
+function vout = sort_fits(fits, errors, fit_type, num)
+    vout = cell(1, 2);
+
+    switch fit_type
+        case 'cc'
+            num_vars = 3;
+        case 'hn'
+            num_vars = 4;
+    end
+    
+    tau_values = fits(1:num_vars:(3 * num));
+    [~, I] = sort(tau_values);
+    J = cell2mat(arrayfun(@(x) num_vars * (x - 1) + (1:num_vars), I, 'UniformOutput', false));
+    
+    vout{1} = [fits(J) fits(end)];
+    vout{2} = [errors(J', 1) errors(J', 2); errors(end, :)].';
+    vout{2} = vout{2}(:)';
 end
 
 function [x0, lb, ub] = make_bounds(frequency, fit_type, num)
-    min_tau = 1 / (1.05 * 2 * pi * max(frequency));
-    max_tau = 1 / (0.95 * 2 * pi * min(frequency));
+    min_tau = 1 / (1.2 * 2 * pi * max(frequency));
+    max_tau = 1 / (0.9 * 2 * pi * min(frequency));
     rands = 10.^(((log10(max_tau) - log10(min_tau)) .* rand(1, num)) + log10(min_tau));
     
     switch fit_type
         case 'cc'
             idxs = 1:3:(num * 3);
             x0 = [mean([min_tau max_tau]), 0.05, 1];
-            lb = [min_tau, 1E-7, 0.1];
-            ub = [max_tau, 0.2, 10];
+            lb = [min_tau, 1E-7, 1E-1];
+            ub = [max_tau, 0.6, 15];
         case 'hn'
             idxs = 1:4:(num * 4);
             x0 = [mean([min_tau max_tau]), 0.9, 1, 5];
@@ -154,7 +174,7 @@ function [x0, lb, ub] = make_bounds(frequency, fit_type, num)
     end
     chi_s_x0 = [1E-3];
     chi_s_lb = [1E-4];
-    chi_s_ub = [1E-1];
+    chi_s_ub = [10];
 
     x0 = [repmat(x0, 1, num), chi_s_x0];
     x0(idxs) = rands;

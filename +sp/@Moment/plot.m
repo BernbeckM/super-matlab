@@ -7,7 +7,7 @@ function plot(obj, plot_type, varargin)
             xdata = obj.data.Field ./ 10000;
             ydata = obj.data.MomentEff;
         case 'sus'
-            idxs = sp.DataFile.get_blocks(obj.data.Time, 200);
+            idxs = sp.DataFile.get_blocks(obj.data.Time, 400);
             group = cell2mat(arrayfun(@(x) ones(idxs(x) - idxs(x - 1) + 1, 1), 2:length(idxs), 'UniformOutput', false));
             xdata = obj.data.Temperature;
             ydata = obj.data.ChiT;
