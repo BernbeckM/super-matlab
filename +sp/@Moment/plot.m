@@ -11,9 +11,10 @@ function plot(obj, plot_type, varargin)
             group = cell2mat(arrayfun(@(x) ones(idxs(x) - idxs(x - 1) + 1, 1), 2:length(idxs), 'UniformOutput', false));
             xdata = obj.data.Temperature;
             ydata = obj.data.ChiT;
+            xlabel('Temperature (K)'); ylabel('\chiT (emu mol^{-1} K)');
         otherwise
             error('unsupported plot type');
     end
 
-    sp.PlotHelper.scatter(xdata, ydata, group, marker);
+    sp.PlotHelper.plot(xdata, ydata, group);
 end

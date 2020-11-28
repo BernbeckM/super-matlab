@@ -34,4 +34,5 @@ function plot(obj, plot_type, varargin)
         obj.datafiles(a).plot(plot_type, varargin{:});
     end
     sp.PlotHelper.set_impedence_axes(plot_type);
+    sp.PlotHelper.set_color();
 end

@@ -25,7 +25,7 @@ classdef PlotHelper
             groups = unique(group);
             for a = 1:length(groups)
                 rows = group == groups(a);
-                scatter(x(rows), y(rows), 'filled', marker, 'Tag', string(groups(a)));
+                scatter(x(rows), y(rows), 27, 'filled', marker, 'Tag', string(groups(a)));
             end
         end
 
@@ -53,18 +53,24 @@ classdef PlotHelper
 
         end
         
-        function make_pretty(cold, hot, spacing, units)
-            sp.PlotHelper.set_color(cold, hot);
+        function make_pretty(spacing, units)
             sp.PlotHelper.set_spacing(spacing);
             sp.PlotHelper.sort_plots();
             sp.PlotHelper.make_legend(units);
         end
 
-        function set_color(cold, hot)
+        function set_color()
             current_axes = gca();
             cmap = jet(100);
 
             plots = findobj('Parent', current_axes, '-regexp', 'Tag', '[^'']');
+            % for some reason plots.Tag throws an error when the array
+            % contains lines and scatters, but works when homogenous
+            temps = zeros(length(plots), 1);
+            for a = 1:length(plots)
+                temps(a) = str2double(plots(a).Tag);
+            end
+            cold = min(temps); hot = max(temps);
             for a = 1:length(plots)
                 tag = str2double(plots(a).Tag);
                 temp_scaled = floor(rescale(tag, 1, length(cmap), 'InputMin', cold, 'InputMax', hot));
@@ -74,16 +80,20 @@ classdef PlotHelper
                 switch plots(a).Type
                     case 'line'
                         plots(a).Color = color_rgb;
+                        plots(a).Color(4) = 1.0;
                     case 'scatter'
                         plots(a).CData = color_rgb;
+                        plots(a).MarkerFaceAlpha = 1.0;
                 end
             end
+            sp.PlotHelper.sort_plots();
         end
 
         function sort_plots()
             current_axes = gca();
             objs = findobj('Parent', current_axes);
-            [~, idxs] = sort(get(objs, 'Tag'));
+            tags = cellfun(@str2num, get(objs, 'Tag'));
+            [~, idxs] = sort(tags, 'descend');
             current_axes.Children = objs(idxs);
             objs = findobj('Parent', current_axes, '-regexp', 'Tag', '[^'']', 'Type', 'scatter');
             uistack(objs, 'top');
@@ -92,6 +102,7 @@ classdef PlotHelper
         end
 
         function set_spacing(spacing)
+            sp.PlotHelper.set_color();
             current_axes = gca();
 
             plots = current_axes.Children;
@@ -111,12 +122,14 @@ classdef PlotHelper
                             old_color = objs(b).Color;
                             new_color = rgb2hsv(old_color);
                             new_color(2) = 0;
+                            new_color(3) = 0.75;
                             objs(b).Color = hsv2rgb(new_color);
                             objs(b).Color(4) = 0.5;
                         case 'scatter'
                             old_color = objs(b).CData;
                             new_color = rgb2hsv(old_color);
                             new_color(2) = 0;
+                            new_color(3) = 0.75;
                             objs(b).CData = hsv2rgb(new_color);
                             objs(b).MarkerFaceAlpha = 0.5;
                     end

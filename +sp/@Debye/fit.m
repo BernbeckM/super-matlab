@@ -20,6 +20,19 @@ function fit(obj, varargin)
     max_fit_num = 1;
     temps = unique(data.TemperatureRounded);
     warning('off','all');
+    
+    fmincon_opts = optimoptions(@fmincon, ...
+            'Algorithm', 'interior-point', ...
+            'FunctionTolerance', 1e-38, 'OptimalityTolerance', 1e-38, 'StepTolerance', 1e-38, ...
+            'ObjectiveLimit', 1e-38, 'Display', 'off', 'ConstraintTolerance', 1E-38);
+        
+    lsqcurvefit_opts = optimoptions('lsqcurvefit', ...
+            'Algorithm', 'trust-region-reflective', ...
+            'FunctionTolerance', 1e-33, 'OptimalityTolerance', 1e-33, 'StepTolerance', 1e-33, ...
+            'Display', 'off');
+        
+    ms = MultiStart('UseParallel', true, 'FunctionTolerance', 1e-38, 'XTolerance', 1e-38);
+
     for a = 1:length(temps)
         disp(['fitting ' num2str(temps(a)) ' K data']);
         rows = data.TemperatureRounded == temps(a);
@@ -40,20 +53,24 @@ function fit(obj, varargin)
                 [data.ChiIn(rows), data.ChiOut(rows)], ...
                 fit_num * cc, ...
                 fit_num * hn, b), ...
-                'lb', lb, 'ub', ub, 'options', obj.fmincon_opts);
+                'lb', lb, 'ub', ub, 'options', fmincon_opts);
 
-            [x0, ~, ~, ~, ~] = obj.gs.run(problem);
+            [x0, residual0] = ms.run(problem, 1500);
+            improvement_factor = residual_old / residual0;
+            fprintf('old residual: %.4f \n', residual_old);
+            fprintf('new residual: %.4f \n', residual0);
+            fprintf('residual improvement factor: %.4f \n', improvement_factor);
             [x02, ~, residual, ~, ~, ~, jacobian] = ...
                 lsqcurvefit(@(b, xdata) sp.Debye.model_wrapper(xdata, fit_num * cc, fit_num * hn, b), ...
-                x0, data.Frequency(rows), [data.ChiIn(rows), data.ChiOut(rows)], [], [], obj.lsqcurvefit_opts);
+                x0, data.Frequency(rows), [data.ChiIn(rows), data.ChiOut(rows)], lb, ub, lsqcurvefit_opts);
             ci = nlparci(x02, residual, 'Jacobian', jacobian);
-            residual = sum(power(residual(:, 2), 2));
-            disp(['        residual improvement factor: ' num2str(residual_old / residual)]);
-
+            residual = sum(power(residual(:, 1), 2)) + sum(power(residual(:, 2), 2));
+            fprintf('check residual: %.4f\n\n', residual);
+            
             if p.Results.fit_num ~= 0
                 max_fit_num = p.Results.fit_num;
                 break; 
-            elseif ((residual_old / residual) < 7)
+            elseif (improvement_factor < 2.6)
                 x0 = x0_old;
                 ci = ci_old;
                 fit_num = fit_num - 1;
@@ -63,7 +80,7 @@ function fit(obj, varargin)
                 max_fit_num = 3;
                 break;
             else
-                residual_old = residual;
+                residual_old = residual0;
                 x0_old = x0;
                 ci_old = ci;
                 fit_num = fit_num + 1;
@@ -72,14 +89,13 @@ function fit(obj, varargin)
         sorted = sort_fits(x0, ci, p.Results.fit_type, fit_num);
         x0 = sorted{1}; ci = sorted{2};
         
-        warning('on','all')
+        warning('off','all');
         
         xmodel = logspace(log10(min(data.Frequency(rows))), log10(max(data.Frequency(rows))), 100)';
         ymodel = sp.Debye.model(xmodel, fit_num * cc, fit_num * hn, x0);
         
         fit_padding = NaN(1, (3 - fit_num) * ((cc * 3) + (hn * 4)));
         error_padding = NaN(1, (3 - fit_num) * ((cc * 6) + (hn * 8)));
-        %ci = reshape(ci.', 1, []);
         
         new_fits = [temps(a), x0(1:end-1), fit_padding, x0(end)];
         new_errors = [temps(a), ci(1:end-2), error_padding, ci(end-1:end)];
@@ -100,41 +116,33 @@ function fit(obj, varargin)
     obj.model_error = array2table(obj.model_error, 'VariableNames', model_error_vars);
 end
 
-    %{
-        cc_entries = [];
-        cc_errors = [];
-        if p.Results.CC > 0
-            cc_entries = x0(1:3*p.Results.CC);
-            cc_errors = ci(1:3*p.Results.CC,:);
-            if p.Results.CC == 1
-                cc_errors = [cc_errors(:,1), cc_errors(:,2)].';
-                cc_errors = cc_errors(:)';
-            else
-                [~, I] = sort(cc_entries(1:3:3*p.Results.CC));
-                J = cell2mat(arrayfun(@(x) 3*(x-1)+(1:3), I, 'UniformOutput', false));
-                cc_entries = cc_entries(J);
-                cc_errors = [cc_errors(J',1), cc_errors(J',2)].';
-                cc_errors = cc_errors(:)';
-            end
-        end
-        hn_entries = [];
-        hn_errors = [];
-        if p.Results.HN > 0
-            hn_entries = x0(p.Results.CC*3+(1:4*p.Results.HN));
-            hn_errors = ci(p.Results.CC*3+(1:4*p.Results.HN),:);
-            if p.Results.HN == 1
-                hn_errors = [hn_errors(:,1), hn_errors(:,2)].';
-                hn_errors = hn_errors(:)';
-            else
-                [~, I] = sort(hn_entries(1:4:4*p.Results.HN));
-                J = cell2mat(arrayfun(@(x) 4*(x-1)+(1:4), I, 'UniformOutput', false));
-                hn_entries = hn_entries(J);
-                hn_errors = [hn_errors(J',1), hn_errors(J',2)].';
-                hn_errors = hn_errors(:)';
-            end
-        end
-        x0 = [cc_entries, hn_entries, x0(end)];
-%}
+function [x0, lb, ub] = make_bounds(frequency, fit_type, num)
+    min_tau = 1 / (1.05 * 2 * pi * max(frequency));
+    max_tau = 1 / (0.95 * 2 * pi * min(frequency));
+    rands = 10.^(((log10(max_tau) - log10(min_tau)) .* rand(1, num)) + log10(min_tau));
+    
+    switch fit_type
+        case 'cc'
+            idxs = 1:3:(num * 3);
+            %       tau                     alpha xt
+            x0 = [mean([min_tau max_tau]),  0.05, 1.7];
+            lb = [min_tau,                  1E-8, 1];
+            ub = [max_tau,                  0.25, 25];
+        case 'hn'
+            idxs = 1:4:(num * 4);
+            x0 = [mean([min_tau max_tau]), 0.9, 1, 5];
+            lb = [min_tau, 0.01, 0.01, 1E-1];
+            ub = [max_tau, 1, 1, 55];
+    end
+    chi_s_x0 = 1.3E-2;
+    chi_s_lb = 1E-4;
+    chi_s_ub = 8E-1;
+
+    x0 = [repmat(x0, 1, num), chi_s_x0];
+    x0(idxs) = rands;
+    lb = [repmat(lb, 1, num), chi_s_lb];
+    ub = [repmat(ub, 1, num), chi_s_ub];
+end
 
 function vout = sort_fits(fits, errors, fit_type, num)
     vout = cell(1, 2);
@@ -153,33 +161,6 @@ function vout = sort_fits(fits, errors, fit_type, num)
     vout{1} = [fits(J) fits(end)];
     vout{2} = [errors(J', 1) errors(J', 2); errors(end, :)].';
     vout{2} = vout{2}(:)';
-end
-
-function [x0, lb, ub] = make_bounds(frequency, fit_type, num)
-    min_tau = 1 / (1.2 * 2 * pi * max(frequency));
-    max_tau = 1 / (0.9 * 2 * pi * min(frequency));
-    rands = 10.^(((log10(max_tau) - log10(min_tau)) .* rand(1, num)) + log10(min_tau));
-    
-    switch fit_type
-        case 'cc'
-            idxs = 1:3:(num * 3);
-            x0 = [mean([min_tau max_tau]), 0.05, 1];
-            lb = [min_tau, 1E-7, 1E-1];
-            ub = [max_tau, 0.6, 15];
-        case 'hn'
-            idxs = 1:4:(num * 4);
-            x0 = [mean([min_tau max_tau]), 0.9, 1, 5];
-            lb = [min_tau, 0.01, 0.01, 1E-1];
-            ub = [max_tau, 1, 1, 55];
-    end
-    chi_s_x0 = [1E-3];
-    chi_s_lb = [1E-4];
-    chi_s_ub = [10];
-
-    x0 = [repmat(x0, 1, num), chi_s_x0];
-    x0(idxs) = rands;
-    lb = [repmat(lb, 1, num), chi_s_lb];
-    ub = [repmat(ub, 1, num), chi_s_ub];
 end
 
 function output = make_table_vars(table_type, num)
