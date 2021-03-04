@@ -7,6 +7,7 @@ classdef AC < sp.Run
             parsed{:, 'AC Frequency (Hz)'} = raw_data{:, 'AC Frequency (Hz)'};
             
             obj.data = [obj.data; parsed];
+            
         end
     end
 end
